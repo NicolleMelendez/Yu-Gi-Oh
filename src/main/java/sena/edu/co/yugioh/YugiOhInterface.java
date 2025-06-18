@@ -2,11 +2,9 @@ package sena.edu.co.yugioh;
 
 import java.awt.*;
 import java.net.URI;
-import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import netscape.javascript.JSObject;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
