@@ -1,17 +1,15 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
 package sena.edu.co.yugioh;
 
+import java.awt.Image;
 import java.net.URI;
+import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.sql.ClientInfoStatus;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import javax.swing.ImageIcon;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -21,7 +19,7 @@ import org.json.JSONObject;
  */
 public class Game extends javax.swing.JFrame {
 
-    List<Integer>listCard = new ArrayList<>();
+    List<Integer> listCard = new ArrayList<>();
     
     List<CardGame> cardListJ1 = new ArrayList<>();
     List<CardGame> cardListM1 = new ArrayList<>();
@@ -42,15 +40,20 @@ public class Game extends javax.swing.JFrame {
         int i = random.nextInt(listCard.size());
         return listCard.get(i);
     }
+    
     /**
      * Creates new form Game
      */
     public Game() {
         initComponents();
+        // Inicializar el juego cuando se crea la ventana
+        DuelYuGiApi();
+        fill();
+        showCardsInGUI();
     }
 
     
-    public CardGame gettCard(){
+    public CardGame getCard(){
         String idCard = String.valueOf(shuffle());
         String url = "https://db.ygoprodeck.com/api/v7/cardinfo.php?id=";
         
@@ -66,8 +69,7 @@ public class Game extends javax.swing.JFrame {
                 JSONObject card = data.getJSONObject(0);
                 
                 int id = card.getInt("id");
-                CardGame cardGame = new CardGame();
-                String name = cardGame.getName();
+                String name = card.getString("name");
                 
                 int atk = 0;
                 int def = 0;
@@ -76,20 +78,96 @@ public class Game extends javax.swing.JFrame {
                     atk = card.getInt("atk");
                 }
                 if (card.has("def")) {
-                    atk = card.getInt("def");
+                    def = card.getInt("def");
                 }
-
+                
+                String imagen = "";
+                JSONArray cardImages = card.getJSONArray("card_images");
+                if(cardImages.length() > 0){
+                    String urlImagen = cardImages.getJSONObject(0).getString("image_url_small");
+                    imagen = urlImagen;
+                }
+                
+                CardGame cardGame = new CardGame(id, name, atk, def, imagen);
+                return cardGame;
+                
             }
             
             
         } catch (Exception e) {
+            // Error silencioso - la GUI manejará cartas nulas
         }
-        
+        return null;
     }
     
-    public void showCard(){
-        
+    public void fill()
+    {
+        for (int i = 0; i < 3; i++) {
+            CardGame card1 = getCard();
+            CardGame card2 = getCard();
+            if(card1 != null) cardListJ1.add(card1);
+            if(card2 != null) cardListM1.add(card2);
+        }
     }
+    
+    // Método eliminado - ya no usamos la consola
+    // Todo se muestra en la GUI
+    
+    // Nuevo método para mostrar las cartas en la GUI
+    public void showCardsInGUI() {
+        // Mostrar cartas del jugador 1 (parte superior)
+        if (cardListJ1.size() > 0) {
+            updateLabel(jLabel1, cardListJ1.get(0));
+        }
+        if (cardListJ1.size() > 1) {
+            updateLabel(jLabel2, cardListJ1.get(1));
+        }
+        if (cardListJ1.size() > 2) {
+            updateLabel(jLabel3, cardListJ1.get(2));
+        }
+        
+        // Mostrar cartas del oponente (parte inferior)
+        if (cardListM1.size() > 0) {
+            updateLabel(jLabel4, cardListM1.get(0));
+        }
+        if (cardListM1.size() > 1) {
+            updateLabel(jLabel5, cardListM1.get(1));
+        }
+        if (cardListM1.size() > 2) {
+            updateLabel(jLabel6, cardListM1.get(2));
+        }
+    }
+    
+    // Método para actualizar un JLabel con información de la carta
+    private void updateLabel(javax.swing.JLabel label, CardGame card) {
+        if (card == null) {
+            label.setText("Sin carta");
+            return;
+        }
+        
+        // Establecer el texto con información de la carta
+        String cardInfo = "<html><center><b>" + card.getName() + "</b><br>" + 
+                         "ATK: " + card.getAtk() + " | DEF: " + card.getDef() + "</center></html>";
+        label.setText(cardInfo);
+        
+        // Intentar cargar la imagen
+        try {
+            if (card.getImg() != null && !card.getImg().isEmpty()) {
+                URL imageUrl = new URL(card.getImg());
+                ImageIcon imageIcon = new ImageIcon(imageUrl);
+                // Redimensionar la imagen para que quepa en el label
+                Image image = imageIcon.getImage().getScaledInstance(100, 140, Image.SCALE_SMOOTH);
+                imageIcon = new ImageIcon(image);
+                label.setIcon(imageIcon);
+                // Mantener el texto debajo de la imagen
+                label.setText("<html><center>" + card.getName() + "</center></html>");
+                label.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+                label.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+            }
+        } catch (Exception e) {
+            // Error silencioso al cargar imagen - se muestra solo texto
+        }
+}
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -140,10 +218,10 @@ public class Game extends javax.swing.JFrame {
                     .addComponent(jLabel1)
                     .addComponent(jLabel2)
                     .addComponent(jLabel3))
-                .addContainerGap(252, Short.MAX_VALUE))
+                .addContainerGap(175, Short.MAX_VALUE))
         );
 
-        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 6, 718, -1));
+        getContentPane().add(jPanel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 83, 718, 280));
 
         jLabel4.setText("jLabel4");
 
@@ -172,7 +250,7 @@ public class Game extends javax.swing.JFrame {
                     .addComponent(jLabel4)
                     .addComponent(jLabel5)
                     .addComponent(jLabel6))
-                .addContainerGap(201, Short.MAX_VALUE))
+                .addContainerGap(202, Short.MAX_VALUE))
         );
 
         getContentPane().add(jPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 370, 730, 290));
@@ -184,12 +262,7 @@ public class Game extends javax.swing.JFrame {
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
+      try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
                     javax.swing.UIManager.setLookAndFeel(info.getClassName());
